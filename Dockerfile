@@ -36,7 +36,8 @@ RUN set -eux; \
 RUN pnpm install --no-frozen-lockfile
 RUN pnpm build
 ENV OPENCLAW_PREFER_PNPM=1
-RUN pnpm ui:install && pnpm ui:build
+RUN pnpm ui:install && pnpm ui:build && \
+    find ./dist/control-ui/assets -name "*.js" -type f -exec sed -i -e 's|"/favicon.svg"|"./favicon.svg"|g' {} +
 
 
 # Runtime image
