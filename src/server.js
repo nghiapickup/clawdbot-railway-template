@@ -148,7 +148,7 @@ function sleep(ms) {
 }
 
 async function waitForGatewayReady(opts = {}) {
-  const timeoutMs = opts.timeoutMs ?? 20_000;
+  const timeoutMs = opts.timeoutMs ?? 60_000;
   const start = Date.now();
   while (Date.now() - start < timeoutMs) {
     try {
@@ -156,7 +156,7 @@ async function waitForGatewayReady(opts = {}) {
       const paths = ["/openclaw", "/"];
       for (const p of paths) {
         try {
-          const res = await fetch(`${GATEWAY_TARGET}${p}`, { method: "GET" });
+          const res = await fetch(`${GATEWAY_TARGET}${p}`, { method: "GET", signal: AbortSignal.timeout(1500) });
           // Any HTTP response means the port is open.
           if (res) return true;
         } catch {
@@ -238,7 +238,7 @@ async function ensureGatewayRunning() {
       try {
         lastGatewayError = null;
         await startGateway();
-        const ready = await waitForGatewayReady({ timeoutMs: 20_000 });
+        const ready = await waitForGatewayReady({ timeoutMs: 60_000 });
         if (!ready) {
           throw new Error("Gateway did not become ready in time");
         }
@@ -1336,6 +1336,17 @@ app.post("/setup/import", requireSetupAuth, async (req, res) => {
   } catch (err) {
     console.error("[import]", err);
     res.status(500).type("text/plain").send(String(err));
+  }
+});
+
+// Explicitly serve favicon.svg to bypass relative path / proxy resolving issues in the built UI
+app.get("/favicon.svg", (req, res) => {
+  const iconPath = path.join("/openclaw", "dist", "control-ui", "favicon.svg");
+  if (fs.existsSync(iconPath)) {
+    res.sendFile(iconPath);
+  } else {
+    // Fallback if built from different location
+    res.status(404).end();
   }
 });
 

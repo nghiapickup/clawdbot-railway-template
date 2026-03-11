@@ -37,7 +37,7 @@ RUN pnpm install --no-frozen-lockfile
 RUN pnpm build
 ENV OPENCLAW_PREFER_PNPM=1
 RUN pnpm ui:install && pnpm ui:build && \
-    find ./dist/control-ui/assets -name "*.js" -type f -exec sed -i -e 's|"/favicon.svg"|"./favicon.svg"|g' {} +
+    find ./dist/control-ui -type f \( -name "*.js" -o -name "*.html" \) -exec sed -i -E 's|"/favicon.svg"|"./favicon.svg"|g; s|`\$\{v\}/favicon\.svg`|`./favicon.svg`|g' {} +
 
 
 # Runtime image
@@ -50,6 +50,7 @@ RUN apt-get update \
     tini \
     python3 \
     python3-venv \
+    chromium \
   && rm -rf /var/lib/apt/lists/*
 
 # `openclaw update` expects pnpm. Provide it in the runtime image.
